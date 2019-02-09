@@ -17,6 +17,9 @@ import edu.wpi.first.networktables.NetworkTableType;
 import edu.wpi.first.cameraserver.CameraServer;
 import edu.wpi.first.networktables.NetworkTableEntry;
 import edu.wpi.first.networktables.NetworkTableInstance;
+import edu.wpi.first.wpilibj.Compressor;
+import edu.wpi.first.wpilibj.DigitalInput;
+import edu.wpi.first.wpilibj.DoubleSolenoid;
 import edu.wpi.first.wpilibj.Encoder;
 import edu.wpi.first.wpilibj.IterativeRobot;
 import edu.wpi.first.wpilibj.Joystick;
@@ -36,9 +39,14 @@ import edu.wpi.first.wpilibj.drive.DifferentialDrive;
  * project.
  */
 public class Robot extends IterativeRobot {
-	WPI_TalonSRX wristController = new WPI_TalonSRX(5);
-	VictorSPX armController = new VictorSPX(7);
 	Encoder wristEncoder = new Encoder(0, 1);
+	Encoder armEncoder = new Encoder(2, 3);
+
+	Compressor compressor = new Compressor(9);
+	VictorSPX vacuumController2 = new VictorSPX(8);
+	VictorSPX armController = new VictorSPX(7);
+	PowerDistributionPanel pdp = new PowerDistributionPanel(6);
+	WPI_TalonSRX wristController = new WPI_TalonSRX(5);
 	WPI_TalonSRX leftfront = new WPI_TalonSRX(4);
 	WPI_TalonSRX leftback = new WPI_TalonSRX(3);
 	WPI_TalonSRX rightfront = new WPI_TalonSRX(2);
@@ -46,31 +54,36 @@ public class Robot extends IterativeRobot {
 	SpeedControllerGroup leftDrive = new SpeedControllerGroup(leftfront, leftback);
 	SpeedControllerGroup rightDrive = new SpeedControllerGroup(rightfront, rightback);
 	DifferentialDrive myRobot = new DifferentialDrive(leftDrive, rightDrive);
+	Talon vacuumController1 = new Talon(0);
 	Talon hwheel = new Talon(1);
-	Encoder armEncoder = new Encoder(2, 3);
-	int phase = 0;
-	private Actuator wrist;
-	private Actuator arm;
 	Joystick driver = new Joystick(0);
 	XboxController armOperator = new XboxController(1);
+	private Actuator wrist;
+	private Actuator arm;
+
+	NetworkTable table;
+	LidarLitePWM lidarLeft = new LidarLitePWM(new DigitalInput(5));
+	LidarLitePWM lidarRight = new LidarLitePWM(new DigitalInput(4));
+	DoubleSolenoid backSolenoid = new DoubleSolenoid(9, 0, 1);
+	DoubleSolenoid fowardSolenoid = new DoubleSolenoid(9, 2, 3);
+
+	int count = 0;
 	double wristAngle = 0;
-	Talon vacuumController1 = new Talon(0);
-	VictorSPX vacuumController2 = new VictorSPX(8);
 	boolean drive = true;
 	boolean controller = false;
-	NetworkTable table;
-	PowerDistributionPanel pdp = new PowerDistributionPanel(6);
-
+	double d = 0;
+	double left = 0;
+	double right = 0;
 
 	/**
-	 * This function is run when the robot is first started up and should be
-	 * used for any initialization code.
+	 * This function is run when the robot is first started up and should be used
+	 * for any initialization code.
 	 */
 	@Override
 	public void robotInit() {
 		CameraServer.getInstance().startAutomaticCapture();
 		wrist = new Actuator(wristController, wristEncoder, 71, 7, 0);
-		arm = new Actuator(armController, armEncoder, 100, 20, 0);			
+		arm = new Actuator(armController, armEncoder, 100, 20, 0);
 		table = NetworkTableInstance.getDefault().getTable("limelight");
 		NetworkTableEntry ledMode = table.getEntry("ledMode");
 		ledMode.setDouble(1);
@@ -93,6 +106,7 @@ public class Robot extends IterativeRobot {
 	public void teleopInit() {
 		wristAngle = wrist.getAngle();
 	}
+
 	/**
 	 * This function is called periodically during operator control.
 	 */
@@ -106,114 +120,118 @@ public class Robot extends IterativeRobot {
 			controller = !controller;
 		}
 
-		if(driver.getRawButtonReleased(8)){
-			table = NetworkTableInstance.getDefault().getTable("limelight");
-			NetworkTableEntry ledMode = table.getEntry("ledMode");
-			ledMode.setDouble(1);
+		if (driver.getRawButtonReleased(8)) {
+			// table = NetworkTableInstance.getDefault().getTable("limelight");
+			// NetworkTableEntry ledMode = table.getEntry("ledMode");
+			// ledMode.setDouble(1);
 		}
 
-		if(driver.getRawButton(8)){
+		if (driver.getRawButton(8) || armOperator.getTriggerAxis(Hand.kLeft) > 0.5) {
 			approachNew();
-		}
-		else if(controller){
-			myRobot.arcadeDrive(-armOperator.getY(Hand.kLeft)/2, armOperator.getX(Hand.kLeft)/2);
-			if(armOperator.getBumper(Hand.kLeft)) {
+			if (driver.getRawButton(3)) {
 				hwheel.set(0.5);
-			}
-			else if(armOperator.getBumper(Hand.kRight)) {
+			} else if (driver.getRawButton(4)) {
 				hwheel.set(-0.5);
-			}
-			else {
+			} else {
 				hwheel.set(0);
 			}
-		}
-		else if(drive){
-			myRobot.arcadeDrive(driver.getY()*((driver.getRawAxis(3)-1)/2), driver.getX()*-((driver.getRawAxis(3)-1)/2));
-			if(driver.getRawButton(3)) {
+		} else if (controller) {
+			myRobot.arcadeDrive(-armOperator.getY(Hand.kLeft) / 2, armOperator.getX(Hand.kLeft) / 2);
+			if (armOperator.getBumper(Hand.kLeft)) {
 				hwheel.set(0.5);
-			}
-			else if(driver.getRawButton(4)) {
+			} else if (armOperator.getBumper(Hand.kRight)) {
 				hwheel.set(-0.5);
-			}
-			else {
+			} else {
 				hwheel.set(0);
 			}
-		}
-		else{
+		} else if (drive) {
+			myRobot.arcadeDrive(driver.getY() * ((driver.getRawAxis(3) - 1) / 2),
+					driver.getX() * -((driver.getRawAxis(3) - 1) / 2));
+			if (driver.getRawButton(3)) {
+				hwheel.set(0.5);
+			} else if (driver.getRawButton(4)) {
+				hwheel.set(-0.5);
+			} else {
+				hwheel.set(0);
+			}
+		} else {
 			followTarget();
 		}
-		
-		//Start Arm/Wrist
-		if(armOperator.getBackButton()){
+
+		// Start Arm/Wrist
+		if (armOperator.getBackButton()) {
 			arm.setStartPosition();
 			wrist.setStartPosition();
-			wristAngle=0;
+			wristAngle = 0;
 		}
-		// System.out.println("arm = " + arm.getAngle() + " wrist = " + wrist.getAngle());
+		// System.out.println("arm = " + arm.getAngle() + " wrist = " +
+		// wrist.getAngle());
 
-		if(armOperator.getAButton()){
+		if (armOperator.getAButton()) {
 			arm.armSet(0);
 			wrist.spinTo(0);
-			wristAngle=0;
-		}
-		else if(armOperator.getBButton()){
+			wristAngle = 0;
+		} else if (armOperator.getBButton()) {
 			arm.armSet(25);
 			wrist.spinTo(123);
-			wristAngle=123;
-		}
-		else if(armOperator.getXButton()){
+			wristAngle = 123;
+		} else if (armOperator.getXButton()) {
 			arm.armSet(67);
 			wrist.spinTo(160);
-			wristAngle=160;
-		}
-		else if(armOperator.getYButton()){
+			wristAngle = 160;
+		} else if (armOperator.getYButton()) {
 			arm.armSet(118);
 			wrist.spinTo(212);
-			wristAngle=212;
-		}
-		else{
+			wristAngle = 212;
+		} else {
 			arm.setSpeed(armOperator.getY(Hand.kRight));
-			if(Math.abs(armOperator.getX(Hand.kLeft)) > 0.15 && !controller){
-				wrist.setSpeed(armOperator.getX(Hand.kLeft)/5);
+			if (Math.abs(armOperator.getX(Hand.kLeft)) > 0.15 && !controller) {
+				wrist.setSpeed(armOperator.getX(Hand.kLeft) / 5);
 				wristAngle = wrist.getAngle();
-			}
-			else if(Math.abs(armOperator.getX(Hand.kRight)) > 0.15){
-				wrist.setSpeed(armOperator.getX(Hand.kRight)/5);
+			} else if (Math.abs(armOperator.getX(Hand.kRight)) > 0.15) {
+				wrist.setSpeed(armOperator.getX(Hand.kRight) / 5);
 				wristAngle = wrist.getAngle();
-			}
-			else {
+			} else {
 				wrist.spinTo(wristAngle);
 			}
 		}
-		//End Arm/Wrist
+		// End Arm/Wrist
 
-		//Start Vacuums
-		if(armOperator.getBumper(Hand.kRight) && !controller){
-			vacuumController1.set(-1);
+		if (!(count % 10 == 0)) {
+			right += lidarRight.getDistance();
+			left += lidarLeft.getDistance();
+		} else {
+			d = left/10 - right/10;
+			System.out.println("Left distance = " + left / 10);
+			System.out.println("Right Distance = " + right / 10);
+			left = 0;
+			right = 0;
 		}
-		else if(armOperator.getTriggerAxis(Hand.kRight) >0.5 && !controller){
-			vacuumController1.set(1);
-		}
-		else{
+
+		// Start Vacuums
+		if (armOperator.getBumper(Hand.kRight) && !controller) {
+			vacuumController1.set(-0.5);
+		} else if (armOperator.getTriggerAxis(Hand.kRight) > 0.5 && !controller) {
+			vacuumController1.set(0.5);
+		} else {
 			vacuumController1.set(0);
 		}
 
-		if(armOperator.getBumper(Hand.kLeft) && !controller){
+		if (armOperator.getBumper(Hand.kLeft) && !controller) {
 			vacuumController2.set(ControlMode.PercentOutput, -1);
-		}
-		else{
+		} else {
 			vacuumController2.set(ControlMode.PercentOutput, 0);
 		}
-		//End Vacuums
+		// End Vacuums
 
-		if(driver.getTrigger()){
-			armOperator.setRumble(RumbleType.kLeftRumble,1);
-			armOperator.setRumble(RumbleType.kRightRumble,1);
-		}		
-		else{
-			armOperator.setRumble(RumbleType.kLeftRumble,0);
-			armOperator.setRumble(RumbleType.kRightRumble,0);
+		if (driver.getTrigger()) {
+			armOperator.setRumble(RumbleType.kLeftRumble, 1);
+			armOperator.setRumble(RumbleType.kRightRumble, 1);
+		} else {
+			armOperator.setRumble(RumbleType.kLeftRumble, 0);
+			armOperator.setRumble(RumbleType.kRightRumble, 0);
 		}
+		count++;
 	}
 
 	/**
@@ -223,7 +241,7 @@ public class Robot extends IterativeRobot {
 	public void testPeriodic() {
 	}
 
-	private void followTarget(){
+	private void followTarget() {
 		table = NetworkTableInstance.getDefault().getTable("limelight");
 		NetworkTableEntry ledMode = table.getEntry("ledMode");
 		NetworkTableEntry tx = table.getEntry("tx");
@@ -235,13 +253,11 @@ public class Robot extends IterativeRobot {
 		double x = tx.getDouble(0.0);
 		double area = ta.getDouble(0.0);
 
-		if(area < 1 && target == 1){
-			myRobot.arcadeDrive(0.4, x/Math.abs(x)*Math.min(Math.abs(x/10), 0.5));
-		}
-		else if(area > 1.5 && target==1){
-			myRobot.arcadeDrive(-0.4, x/Math.abs(x)*(Math.min(Math.abs(x/10), 0.5)));
-		}
-		else{
+		if (area < 1 && target == 1) {
+			myRobot.arcadeDrive(0.4, x / Math.abs(x) * Math.min(Math.abs(x / 10), 0.5));
+		} else if (area > 1.5 && target == 1) {
+			myRobot.arcadeDrive(-0.4, x / Math.abs(x) * (Math.min(Math.abs(x / 10), 0.5)));
+		} else {
 			myRobot.arcadeDrive(0, 0);
 		}
 	}
@@ -261,28 +277,56 @@ public class Robot extends IterativeRobot {
 		double x = tx.getDouble(0.0);
 		double area = ta.getDouble(0.0);
 		double skew = ts.getDouble(0.0);
-		pipeline.setDouble(1);
-		double aL = ta.getDouble(0.0);
-		pipeline.setDouble(2);
-		double aR = ta.getDouble(0.0);
-		pipeline.setDouble(0);
+		// pipeline.setDouble(1);
+		// double aL = ta.getDouble(0.0);
+		// pipeline.setDouble(2);
+		// double aR = ta.getDouble(0.0);
+		// pipeline.setDouble(0);
+		
+		myRobot.arcadeDrive(-driver.getY(), x/Math.abs(x) * Math.min(Math.abs(x / 2), 0.33));
 
-		System.out.println("Area = " + area);
-		System.out.println("Skew = " + skew);
-		System.out.println(aL + " Area Left");
-		System.out.println(aR + " Area Right");
-
-		// if(target == 1 && skew < -45 && skew >-87){
-		// 	myRobot.arcadeDrive(0, x/Math.abs(x)*Math.min(Math.abs(x/5), 0.5));
-		// 	hwheel.set(0.3);
-		// }
-		// else if(target==1 & skew < -3){
-		// 	myRobot.arcadeDrive(0, x/Math.abs(x)*Math.min(Math.abs(x/5), 0.5));
-		// 	hwheel.set(-0.3);
-		// }
-		// else{
-		// 	myRobot.arcadeDrive(0, x/Math.abs(x)*Math.min(Math.abs(x/5), 0.5));
+		// System.out.println("Area = " + area);
+		// System.out.println("Skew = " + skew);
+		// System.out.println(aL + " Area Left");
+		// System.out.println(aR + " Area Right");
+		// if (target == 1 && Math.abs(x) > 3) {
+		// 	myRobot.arcadeDrive(-driver.getY(), x / Math.abs(x) * Math.min(Math.abs(x / 2), 0.33));
 		// 	hwheel.set(0);
+		// } else if (Math.abs(d) > 2 && Math.abs(d) < 100) {
+		// 	hwheel.set(d / Math.abs(d) * Math.min(Math.abs(d), 0.4));
+		// 	myRobot.arcadeDrive(-driver.getY(), x / Math.abs(x) * Math.min(Math.abs(x / 2), 0.33));
+		// } else {
+		// 	hwheel.set(0);
+		// 	myRobot.arcadeDrive(-driver.getY(), x / Math.abs(x) * Math.min(Math.abs(x / 2), 0.33));
 		// }
+	}
+
+	public void approachNewer(){
+		table = NetworkTableInstance.getDefault().getTable("limelight");
+		NetworkTableEntry ledMode = table.getEntry("ledMode");
+		NetworkTableEntry tx = table.getEntry("tx");
+		NetworkTableEntry ta = table.getEntry("ta");
+		NetworkTableEntry tv = table.getEntry("tv");
+		NetworkTableEntry ts = table.getEntry("ts");
+		NetworkTableEntry pipeline = table.getEntry("pipeline");
+		ledMode.setDouble(0);
+
+		pipeline.setDouble(0);
+		double target = tv.getDouble(0.0);
+		double x = tx.getDouble(0.0);
+		double area = ta.getDouble(0.0);
+		double skew = ts.getDouble(0.0);
+		double dArea = 
+
+		if (target == 1 && Math.abs(x) > 3) {
+			myRobot.arcadeDrive(-driver.getY(), x / Math.abs(x) * Math.min(Math.abs(x / 2), 0.33));
+			hwheel.set(0);
+		} else if (Math.abs(d) > 2 && Math.abs(d) < 100) {
+			hwheel.set(d / Math.abs(d) * Math.min(Math.abs(d), 0.4));
+			myRobot.arcadeDrive(-driver.getY(), x / Math.abs(x) * Math.min(Math.abs(x / 2), 0.33));
+		} else {
+			hwheel.set(0);
+			myRobot.arcadeDrive(-driver.getY(), x / Math.abs(x) * Math.min(Math.abs(x / 2), 0.33));
+		}
 	}
 }
