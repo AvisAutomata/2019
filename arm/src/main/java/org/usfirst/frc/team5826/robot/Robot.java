@@ -17,6 +17,7 @@ import edu.wpi.first.networktables.NetworkTableType;
 import edu.wpi.first.cameraserver.CameraServer;
 import edu.wpi.first.networktables.NetworkTableEntry;
 import edu.wpi.first.networktables.NetworkTableInstance;
+import edu.wpi.first.wpilibj.ADXRS450_Gyro;
 import edu.wpi.first.wpilibj.Compressor;
 import edu.wpi.first.wpilibj.DigitalInput;
 import edu.wpi.first.wpilibj.DoubleSolenoid;
@@ -30,6 +31,7 @@ import edu.wpi.first.wpilibj.GenericHID.Hand;
 import edu.wpi.first.wpilibj.GenericHID.RumbleType;
 import edu.wpi.first.wpilibj.SpeedControllerGroup;
 import edu.wpi.first.wpilibj.drive.DifferentialDrive;
+import edu.wpi.first.wpilibj.interfaces.Gyro;
 
 /**
  * The VM is configured to automatically run this class, and to call the
@@ -62,10 +64,11 @@ public class Robot extends IterativeRobot {
 	private Actuator arm;
 
 	NetworkTable table;
+	private Gyro gyro = new ADXRS450_Gyro();
 	LidarLitePWM lidarLeft = new LidarLitePWM(new DigitalInput(5));
 	LidarLitePWM lidarRight = new LidarLitePWM(new DigitalInput(4));
-	DoubleSolenoid backSolenoid = new DoubleSolenoid(9, 0, 1);
-	DoubleSolenoid fowardSolenoid = new DoubleSolenoid(9, 2, 3);
+	DoubleSolenoid backSolenoid = new DoubleSolenoid(6, 0, 1);
+	DoubleSolenoid fowardSolenoid = new DoubleSolenoid(6, 2, 3);
 
 	int count = 0;
 	double wristAngle = 0;
@@ -83,6 +86,7 @@ public class Robot extends IterativeRobot {
 	@Override
 	public void robotInit() {
 		CameraServer.getInstance().startAutomaticCapture();
+		gyro.calibrate();
 		wrist = new Actuator(wristController, wristEncoder, 71, 7, 0);
 		arm = new Actuator(armController, armEncoder, 100, 20, 0);
 		table = NetworkTableInstance.getDefault().getTable("limelight");
@@ -165,8 +169,7 @@ public class Robot extends IterativeRobot {
 			wrist.setStartPosition();
 			wristAngle = 0;
 		}
-		System.out.println("arm = " + arm.getAngle() + " wrist = " + wrist.getAngle());
-
+		System.out.println("arm = " + arm.getAngle() + " wrist = " + wrist.getAngle() + " Gyro = " + gyro.getAngle());
 		if (armOperator.getAButton()) {
 			arm.armSet(0);
 			wrist.spinTo(0);
@@ -231,11 +234,9 @@ public class Robot extends IterativeRobot {
 		}
 		// End Vacuums
 
-		if (driver.getTrigger()) {
-			armOperator.setRumble(RumbleType.kLeftRumble, 1);
-			armOperator.setRumble(RumbleType.kRightRumble, 1);
+		if (pdp.getCurrent(4) > 8.6 || (pdp.getCurrent(12) < 10 && pdp.getCurrent(12) > 4)) {
+			armOperator.setRumble(RumbleType.kRightRumble, 0.2);
 		} else {
-			armOperator.setRumble(RumbleType.kLeftRumble, 0);
 			armOperator.setRumble(RumbleType.kRightRumble, 0);
 		}
 		count++;
