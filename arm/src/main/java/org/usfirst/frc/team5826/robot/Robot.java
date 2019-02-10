@@ -42,22 +42,22 @@ public class Robot extends IterativeRobot {
 	Encoder wristEncoder = new Encoder(0, 1);
 	Encoder armEncoder = new Encoder(2, 3);
 
-	Compressor compressor = new Compressor(9);
+	VictorSPX vacuumController1 = new VictorSPX(9);
 	VictorSPX vacuumController2 = new VictorSPX(8);
-	VictorSPX armController = new VictorSPX(7);
-	PowerDistributionPanel pdp = new PowerDistributionPanel(6);
-	WPI_TalonSRX wristController = new WPI_TalonSRX(5);
+	Compressor compressor = new Compressor(6);
 	WPI_TalonSRX leftfront = new WPI_TalonSRX(4);
 	WPI_TalonSRX leftback = new WPI_TalonSRX(3);
 	WPI_TalonSRX rightfront = new WPI_TalonSRX(2);
 	WPI_TalonSRX rightback = new WPI_TalonSRX(1);
+	PowerDistributionPanel pdp = new PowerDistributionPanel(0);
 	SpeedControllerGroup leftDrive = new SpeedControllerGroup(leftfront, leftback);
 	SpeedControllerGroup rightDrive = new SpeedControllerGroup(rightfront, rightback);
 	DifferentialDrive myRobot = new DifferentialDrive(leftDrive, rightDrive);
-	Talon vacuumController1 = new Talon(0);
-	Talon hwheel = new Talon(1);
-	Joystick driver = new Joystick(0);
+	Talon wristController = new Talon(7);
+	Talon armController = new Talon(6);
+	Talon hwheel = new Talon(5);
 	XboxController armOperator = new XboxController(1);
+	Joystick driver = new Joystick(0);
 	private Actuator wrist;
 	private Actuator arm;
 
@@ -74,6 +74,7 @@ public class Robot extends IterativeRobot {
 	double d = 0;
 	double left = 0;
 	double right = 0;
+	double dArea = 0;
 
 	/**
 	 * This function is run when the robot is first started up and should be used
@@ -164,8 +165,7 @@ public class Robot extends IterativeRobot {
 			wrist.setStartPosition();
 			wristAngle = 0;
 		}
-		// System.out.println("arm = " + arm.getAngle() + " wrist = " +
-		// wrist.getAngle());
+		System.out.println("arm = " + arm.getAngle() + " wrist = " + wrist.getAngle());
 
 		if (armOperator.getAButton()) {
 			arm.armSet(0);
@@ -207,14 +207,21 @@ public class Robot extends IterativeRobot {
 			left = 0;
 			right = 0;
 		}
+		// if(driver.getRawButtonPressed(11)){
+		// 	on = false;
+		// }
+		// else if(driver.getRawButtonPressed(11) && !on){
+
+		// }
+
 
 		// Start Vacuums
 		if (armOperator.getBumper(Hand.kRight) && !controller) {
-			vacuumController1.set(-0.5);
+			vacuumController1.set(ControlMode.PercentOutput, -0.5);
 		} else if (armOperator.getTriggerAxis(Hand.kRight) > 0.5 && !controller) {
-			vacuumController1.set(0.5);
+			vacuumController1.set(ControlMode.PercentOutput, 0.5);
 		} else {
-			vacuumController1.set(0);
+			vacuumController1.set(ControlMode.PercentOutput, 0);
 		}
 
 		if (armOperator.getBumper(Hand.kLeft) && !controller) {
@@ -316,17 +323,25 @@ public class Robot extends IterativeRobot {
 		double x = tx.getDouble(0.0);
 		double area = ta.getDouble(0.0);
 		double skew = ts.getDouble(0.0);
-		double dArea = 
+		double dif = Math.round(d);
+		if(count%30 == 0){
+			dArea = area;
+		}
 
 		if (target == 1 && Math.abs(x) > 3) {
 			myRobot.arcadeDrive(-driver.getY(), x / Math.abs(x) * Math.min(Math.abs(x / 2), 0.33));
 			hwheel.set(0);
-		} else if (Math.abs(d) > 2 && Math.abs(d) < 100) {
-			hwheel.set(d / Math.abs(d) * Math.min(Math.abs(d), 0.4));
+		} else if (area - dArea > 0.2) {
+			hwheel.set(0.3);
 			myRobot.arcadeDrive(-driver.getY(), x / Math.abs(x) * Math.min(Math.abs(x / 2), 0.33));
-		} else {
+		} else if(area - dArea < -0.2){
+			hwheel.set(-0.3);
+			myRobot.arcadeDrive(-driver.getY(), x / Math.abs(x) * Math.min(Math.abs(x / 2), 0.33));
+		}
+		else {
 			hwheel.set(0);
 			myRobot.arcadeDrive(-driver.getY(), x / Math.abs(x) * Math.min(Math.abs(x / 2), 0.33));
+			dArea = area;
 		}
 	}
 }

@@ -3,15 +3,17 @@ package org.usfirst.frc.team5826.robot;
 import com.ctre.phoenix.motorcontrol.ControlMode;
 import com.ctre.phoenix.motorcontrol.can.BaseMotorController;
 import edu.wpi.first.wpilibj.Encoder;
+import edu.wpi.first.wpilibj.Talon;
+import edu.wpi.first.wpilibj.VictorSP;
 
 public class Actuator {
-	private BaseMotorController controller;
+	private Talon controller;
 	private Encoder encoder;
 	private int gearRatio;
 	private int revolutionsPerPulse;
 	private double startingPoint;
 
-	public Actuator(BaseMotorController controller, Encoder encoder, int gearRatio, int revolutionsPerPulse,
+	public Actuator(Talon controller, Encoder encoder, int gearRatio, int revolutionsPerPulse,
 			double startingPoint) {
 		super();
 		this.controller = controller;
@@ -23,13 +25,13 @@ public class Actuator {
 
 	public boolean spinTo(double angle) {
 		if (getAngle() < angle - 0.5) {
-			controller.set(ControlMode.PercentOutput, Math.min((angle - 0.5 - getAngle()) / 10, 0.5));
+			controller.set(Math.min((angle - 0.5 - getAngle()) / 10, 0.5));
 			return false;
 		} else if (getAngle() > angle + 0.5) {
-			controller.set(ControlMode.PercentOutput, Math.max((angle + 0.5 - getAngle()) / 10, -0.5));
+			controller.set(Math.max((angle + 0.5 - getAngle()) / 10, -0.5));
 			return false;
 		} else {
-			controller.set(ControlMode.PercentOutput, 0);
+			controller.set(0);
 			return true;
 		}
 	}
@@ -39,11 +41,11 @@ public class Actuator {
 
 	public void armSet(double angle) {
 		if (getAngle() < angle - 0.5) {
-			controller.set(ControlMode.PercentOutput, Math.min((getAngle() - angle - 0.5), -0.5));
+			controller.set(Math.min((getAngle() - angle - 0.5), -0.5));
 		} else if (getAngle() > angle + 0.5) {
-			controller.set(ControlMode.PercentOutput, Math.min((getAngle() - angle + .5), 0.5));
+			controller.set(Math.min((getAngle() - angle + .5), 0.5));
 		} else {
-			controller.set(ControlMode.PercentOutput, 0);
+			controller.set(0);
 		}
 	}
 
@@ -53,7 +55,7 @@ public class Actuator {
 	}
 
 	public void setSpeed(double speed) {
-		controller.set(ControlMode.PercentOutput, speed);
+		controller.set(speed);
 	}
 
 	public void setStartPosition() {
