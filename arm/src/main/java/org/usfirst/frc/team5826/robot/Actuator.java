@@ -25,10 +25,10 @@ public class Actuator {
 
 	public boolean spinTo(double angle) {
 		if (getAngle() < angle - 0.5) {
-			controller.set(Math.min((angle - 0.5 - getAngle()) / 10, 0.5));
+			controller.set(Math.min((angle - 0.5 - getAngle()) / 6, 0.5));
 			return false;
 		} else if (getAngle() > angle + 0.5) {
-			controller.set(Math.max((angle + 0.5 - getAngle()) / 10, -0.5));
+			controller.set(Math.max((angle + 0.5 - getAngle()) / 6, -0.5));
 			return false;
 		} else {
 			controller.set(0);
