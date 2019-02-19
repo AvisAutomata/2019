@@ -1,9 +1,3 @@
-/*----------------------------------------------------------------------------*/
-/* Copyright (c) 2017-2018 FIRST. All Rights Reserved.                        */
-/* Open Source Software - may be modified and shared by FRC teams. The code   */
-/* must be accompanied by the FIRST BSD license file in the root directory of */
-/* the project.                                                               */
-/*----------------------------------------------------------------------------*/
 
 package org.usfirst.frc.team5826.robot;
 
@@ -62,13 +56,13 @@ public class Robot extends IterativeRobot {
 	DifferentialDrive myRobot = new DifferentialDrive(leftDrive, rightDrive);
 	Talon wristController = new Talon(7);
 	Talon armController = new Talon(6);
-	Talon hwheel = new Talon(5);
+	Talon hwheel = new Talon(5); 
 	XboxController armOperator = new XboxController(1);
 	Joystick driver = new Joystick(0);
 	private Actuator wrist;
 	private Actuator arm;
 	private Arm armSS;
-
+	// test comment 
 	NetworkTable table;
 	private Gyro gyro = new ADXRS450_Gyro();
 	LidarLitePWM lidarLeft = new LidarLitePWM(new DigitalInput(8));
@@ -79,10 +73,10 @@ public class Robot extends IterativeRobot {
 	int count = 0;
 	double wristAngle = 0;
 	boolean drive = true;
-	double d = 0;
+	double d = 0; //Sum of Lidar's 
 	double left = 0;
 	double right = 0;
-	double dArea = 0;
+	double dArea = 0; // variable for old limelight code
 
 	public boolean vacuum1 = false;
 	public boolean vacuum2 = false;
@@ -192,7 +186,7 @@ public class Robot extends IterativeRobot {
 			}
 		}
 		// End Arm/Wrist
-
+		// Lidar's Count
 		// if (!(count % 10 == 0)) {
 		// 	right += lidarRight.getDistance();
 		// 	left += lidarLeft.getDistance();
@@ -209,15 +203,6 @@ public class Robot extends IterativeRobot {
 		// else if(driver.getRawButtonPressed(11) && !on){
 
 		// }
-
-		// Start Vacuums
-	/* 	if (armOperator.getBumper(Hand.kRight)) {
-			vacuumController1.set(ControlMode.PercentOutput, -0.50);
-		} else if (armOperator.getTriggerAxis(Hand.kRight) > 0.5) {
-			vacuumController1.set(ControlMode.PercentOutput, 0.5);
-		} else {
-			vacuumController1.set(ControlMode.PercentOutput, 0);
-		} */
 
 		//Start Disk Vacuum
 		if(armOperator.getBumper(Hand.kRight)) {
@@ -258,7 +243,7 @@ public class Robot extends IterativeRobot {
 			vacuumController2.set(ControlMode.PercentOutput, 0);
 		}
 		//End Ball Vacuum
-
+		// PDP CODE
 		// if (pdp.getCurrent(4) > 8 || (pdp.getCurrent(12) < 10 && pdp.getCurrent(12) > 4)) {
 		// 	armOperator.setRumble(RumbleType.kRightRumble, 0.2);
 		// } else {
@@ -351,6 +336,7 @@ public class Robot extends IterativeRobot {
 
 		}
 	}
+	// OLD APPROACH CODE
 	// public void approachNew() {
 	// 	table = NetworkTableInstance.getDefault().getTable("limelight");
 	// 	NetworkTableEntry ledMode = table.getEntry("ledMode");
