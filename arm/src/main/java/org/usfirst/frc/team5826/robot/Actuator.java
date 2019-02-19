@@ -51,6 +51,7 @@ public class Actuator {
 
 	public double getAngle() {
 		double angle = startingPoint + encoder.get() * 360 / (revolutionsPerPulse * gearRatio);
+		System.out.println(angle);
 		return angle;
 	}
 
