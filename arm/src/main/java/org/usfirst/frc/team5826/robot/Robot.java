@@ -83,6 +83,7 @@ public class Robot extends IterativeRobot {
 		table = NetworkTableInstance.getDefault().getTable("limelight");
 		NetworkTableEntry ledMode = table.getEntry("ledMode");
 		ledMode.setDouble(1);
+		dash.init();
 	}
 
 	@Override
@@ -129,7 +130,8 @@ public class Robot extends IterativeRobot {
 			// TODO Test this.
 			if (Math.abs(gyroValue - 180) > 2) {
 				myRobot.arcadeDrive(-driver.getY(),
-						gyroValue / Math.abs((gyroValue != 0) ? gyroValue : 1) * Math.min((gyroValue - 180) / 4, 0.5));
+						-gyroValue / Math.abs(((gyroValue - 180) != 0) ? (gyroValue - 180) : 1)
+								* Math.min(Math.abs(gyroValue - 180) / 6, 0.4));
 			} else {
 				myRobot.arcadeDrive(-driver.getY(), 0);
 			}
@@ -146,8 +148,9 @@ public class Robot extends IterativeRobot {
 			// } else {
 			// hwheel.set(0);
 			// }
-			if (Math.abs(driver.getX()) > 0.1) {
-				hwheel.set(driver.getX());
+			if (Math.abs(driver.getX()) > 0.2) {
+				hwheel.set(driver.getX() / Math.abs((driver.getX() != 0) ? driver.getX() : 1)
+						* Math.min(driver.getX(), 0.5));
 			} else {
 				hwheel.set(0);
 			}
@@ -171,8 +174,9 @@ public class Robot extends IterativeRobot {
 		} else if (armOperator.getYButton()) {
 			wristAngle = armSS.moveTop(discVac, ballVac);
 		} else {
-			if (arm.getAngle() < 120) {
-				arm.setSpeed(armOperator.getY(Hand.kRight));
+			if (arm.getAngle() < 120 - 4/* TODO Change for Competition robot */) {
+				arm.setSpeed((armOperator.getY(Hand.kRight) < 0) ? armOperator.getY(Hand.kRight)
+						: armOperator.getY(Hand.kRight) / 2);
 			} else {
 				arm.setSpeed(Math.max(armOperator.getY(Hand.kRight), 0));
 			}
@@ -189,11 +193,12 @@ public class Robot extends IterativeRobot {
 		// Start Disk Vacuum
 		if (armOperator.getBumper(Hand.kRight)) {
 			discVac = true;
-		} else if (armOperator.getTriggerAxis(Hand.kRight) > 0.5) {
+		} else if (armOperator.getTriggerAxis(Hand.kLeft) > 0.5 || armOperator.getTriggerAxis(Hand.kRight) > 0.5) {
 			discVac = false;
 		}
 		if (discVac == true) {
-			vacuumController1.set(ControlMode.PercentOutput, -0.75);
+			// TODO lower power for competition robot
+			vacuumController1.set(ControlMode.PercentOutput, -1);
 		} else {
 			vacuumController1.set(ControlMode.PercentOutput, 0);
 		}
@@ -202,7 +207,7 @@ public class Robot extends IterativeRobot {
 		// Start Ball Vacuum
 		if (armOperator.getBumper(Hand.kLeft)) {
 			ballVac = true;
-		} else if (armOperator.getTriggerAxis(Hand.kLeft) > 0.5) {
+		} else if (armOperator.getTriggerAxis(Hand.kLeft) > 0.5 || armOperator.getTriggerAxis(Hand.kRight) > 0.5) {
 			ballVac = false;
 		}
 

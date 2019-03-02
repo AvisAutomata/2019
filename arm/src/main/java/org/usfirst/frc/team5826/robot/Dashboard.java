@@ -46,7 +46,6 @@ public class Dashboard {
         SmartDashboard.putNumber("ArmAngle", arm.getAngle());
         SmartDashboard.putNumber("DistanceRight", (double) Math.round(lidarRight.getDistance()*100.0) / 100.0);
         SmartDashboard.putNumber("DistanceLeft", (double) Math.round(lidarLeft.getDistance()*100.0) / 100.0);
-        SmartDashboard.putNumber("ApproachDistance", SmartDashboard.getNumber("ApproachDistance", 30.0));
     }
 
     public double getDistance(){

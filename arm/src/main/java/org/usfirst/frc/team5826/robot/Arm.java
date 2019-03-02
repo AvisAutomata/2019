@@ -7,8 +7,7 @@ public class Arm {
 	private Actuator arm;
     private Actuator wrist;
     private XboxController controller;
-    
-    // jdgfde  
+      
     public Arm (Actuator arm, Actuator wrist, XboxController controller){
 
         this.wrist = wrist;
@@ -27,6 +26,7 @@ public class Arm {
         return arm.getAngle();
 
     }
+    // Start Arm/Wrist Presets
     public double moveTop(boolean discVac, boolean ballVac) {
         double topAngle = wrist.getAngle();
         if(discVac && !ballVac && controller.getYButton()){
@@ -122,4 +122,5 @@ public class Arm {
         }
         return groundAngle;
     }
+    // End Arm/Wrist Presets
 }
