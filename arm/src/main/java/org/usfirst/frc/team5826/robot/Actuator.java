@@ -1,19 +1,16 @@
 package org.usfirst.frc.team5826.robot;
 
-import com.ctre.phoenix.motorcontrol.ControlMode;
-import com.ctre.phoenix.motorcontrol.can.BaseMotorController;
+import com.ctre.phoenix.motorcontrol.can.WPI_TalonSRX;
 import edu.wpi.first.wpilibj.Encoder;
-import edu.wpi.first.wpilibj.Talon;
-import edu.wpi.first.wpilibj.VictorSP;
 
 public class Actuator {
-	private Talon controller;
+	private WPI_TalonSRX controller;
 	private Encoder encoder;
 	private int gearRatio;
 	private int revolutionsPerPulse;
 	private double startingPoint;
 
-	public Actuator(Talon controller, Encoder encoder, int gearRatio, int revolutionsPerPulse,
+	public Actuator(WPI_TalonSRX controller, Encoder encoder, int gearRatio, int revolutionsPerPulse,
 			double startingPoint) {
 		super();
 		this.controller = controller;
@@ -51,7 +48,6 @@ public class Actuator {
 
 	public double getAngle() {
 		double angle = startingPoint + encoder.get() * 360 / (revolutionsPerPulse * gearRatio);
-		System.out.println(angle);
 		return angle;
 	}
 

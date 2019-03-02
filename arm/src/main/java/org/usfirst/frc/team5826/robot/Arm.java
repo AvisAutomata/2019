@@ -4,12 +4,6 @@ import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj.GenericHID.Hand;
 
 public class Arm {
-
-    private static final double topAngle = 10;
-    private static final double midAngle = 150;
-    private static final double bottomAngle = 2;
-    private static final double stationAngle = 2;
-    private static final double groundAngle = 2;
 	private Actuator arm;
     private Actuator wrist;
     private XboxController controller;
@@ -24,7 +18,7 @@ public class Arm {
         
 
     }
-    public double moveZero(boolean vacuum1, boolean vacuum2){
+    public double moveZero(boolean discVac, boolean ballVac){
         arm.armSet(0);
         wrist.spinTo(0);
         return 0;
@@ -33,14 +27,14 @@ public class Arm {
         return arm.getAngle();
 
     }
-    public double moveTop(boolean vacuum1, boolean vacuum2) {
+    public double moveTop(boolean discVac, boolean ballVac) {
         double topAngle = wrist.getAngle();
-        if(vacuum1 && !vacuum2 && controller.getYButton()){
+        if(discVac && !ballVac && controller.getYButton()){
             arm.armSet(120);
             wrist.spinTo(131);
             topAngle = 131;
         }
-        else if(vacuum2 && !vacuum1 && controller.getYButton()){
+        else if(ballVac && !discVac && controller.getYButton()){
             arm.armSet(120);
             wrist.spinTo(131);
             topAngle = 131;
@@ -52,14 +46,14 @@ public class Arm {
         }
         return topAngle;
     }
-    public double moveMid(boolean vacuum1, boolean vacuum2) {
+    public double moveMid(boolean discVac, boolean ballVac) {
         double midAngle = wrist.getAngle();
-        if(vacuum1 && !vacuum2 && controller.getBButton()){
+        if(discVac && !ballVac && controller.getBButton()){
             arm.armSet(87);
             wrist.spinTo(160);
             midAngle = 160;
         }
-        else if(vacuum2 && !vacuum1 && controller.getBButton()){
+        else if(ballVac && !discVac && controller.getBButton()){
             arm.armSet(85);
             wrist.spinTo(160);
             midAngle = 160;
@@ -71,14 +65,14 @@ public class Arm {
         }
         return midAngle;
     }
-    public double moveBottom(boolean vacuum1, boolean vacuum2) {
+    public double moveBottom(boolean discVac, boolean ballVac) {
         double bottomAngle = wrist.getAngle();
-        if(vacuum1 && !vacuum2 && controller.getAButton()){
+        if(discVac && !ballVac && controller.getAButton()){
             arm.armSet(113);
             wrist.spinTo(43);
             bottomAngle = 43;
         }
-        else if(vacuum2 && !vacuum1 && controller.getAButton()){
+        else if(ballVac && !discVac && controller.getAButton()){
             arm.armSet(117);
             wrist.spinTo(43);
             bottomAngle = 43;
@@ -90,14 +84,14 @@ public class Arm {
         }
         return bottomAngle;
     }
-    public double moveStation(boolean vacuum1, boolean vacuum2) {
+    public double moveStation(boolean discVac, boolean ballVac) {
         double stationAngle = wrist.getAngle();
-        if(vacuum1 && !vacuum2 && controller.getXButton()){
+        if(discVac && !ballVac && controller.getXButton()){
             arm.armSet(60);
             wrist.spinTo(104);
             stationAngle = 104;
         }
-        else if(vacuum2 && !vacuum1 && controller.getXButton()){
+        else if(ballVac && !discVac && controller.getXButton()){
             arm.armSet(60);
             wrist.spinTo(108);
             stationAngle = 108;
@@ -109,7 +103,7 @@ public class Arm {
         }
         return stationAngle;
     }
-    public double moveGround(boolean vacuum1, boolean vacuum2) {
+    public double moveGround(boolean discVac, boolean ballVac) {
         double groundAngle = wrist.getAngle();
         if(controller.getBumper(Hand.kRight)){
             arm.armSet(19);
