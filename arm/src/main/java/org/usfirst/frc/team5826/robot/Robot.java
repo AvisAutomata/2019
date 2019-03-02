@@ -130,14 +130,16 @@ public class Robot extends IterativeRobot {
 			// TODO Test this.
 			if (Math.abs(gyroValue - 180) > 2) {
 				myRobot.arcadeDrive(-driver.getY(),
-						-gyroValue / Math.abs(((gyroValue - 180) != 0) ? (gyroValue - 180) : 1)
-								* Math.min(Math.abs(gyroValue - 180) / 6, 0.4));
+						-(gyroValue-180) / Math.abs(((gyroValue - 180) != 0) ? (gyroValue - 180) : 1)
+								* Math.min(Math.abs(gyroValue - 180) / 8, 0.5));
 			} else {
 				myRobot.arcadeDrive(-driver.getY(), 0);
 			}
 
 		} else if (driver.getRawButton(10)) {
 			approachGyroBased(gyroValue);
+		} else if (driver.getRawButton(12)) {
+			cardBoxApproach();
 		} else if (drive) {
 			myRobot.arcadeDrive(driver.getY() * ((driver.getRawAxis(3) - 1) / 2),
 					driver.getZ() * -((driver.getRawAxis(3) - 1) / 2));
@@ -150,7 +152,7 @@ public class Robot extends IterativeRobot {
 			// }
 			if (Math.abs(driver.getX()) > 0.2) {
 				hwheel.set(driver.getX() / Math.abs((driver.getX() != 0) ? driver.getX() : 1)
-						* Math.min(driver.getX(), 0.5));
+						* Math.min(Math.abs(driver.getX()), 0.5));
 			} else {
 				hwheel.set(0);
 			}
@@ -334,10 +336,11 @@ public class Robot extends IterativeRobot {
 	}
 
 	public void cardBoxApproach() {
-		if (lidarLeft.getDistance() > dash.getDistance()) {
+		if (((lidarLeft.getDistance() > lidarRight.getDistance()) ? lidarRight.getDistance()
+				: lidarLeft.getDistance()) > dash.getDistance()) {
 			myRobot.arcadeDrive(0.4, 0);
 		} else {
-			myRobot.arcadeDrive(0, 0);
+			myRobot.arcadeDrive(-0.2, 0);
 		}
 
 	}

@@ -46,6 +46,8 @@ public class Dashboard {
         SmartDashboard.putNumber("ArmAngle", arm.getAngle());
         SmartDashboard.putNumber("DistanceRight", (double) Math.round(lidarRight.getDistance()*100.0) / 100.0);
         SmartDashboard.putNumber("DistanceLeft", (double) Math.round(lidarLeft.getDistance()*100.0) / 100.0);
+        SmartDashboard.putNumber("debug", -(gyroValue-180) / Math.abs(((gyroValue - 180) != 0) ? (gyroValue - 180) : 1)
+        * Math.min(Math.abs(gyroValue - 180) / 4, 0.4));
     }
 
     public double getDistance(){
