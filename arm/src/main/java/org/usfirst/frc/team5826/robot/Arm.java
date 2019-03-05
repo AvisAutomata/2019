@@ -30,77 +30,77 @@ public class Arm {
     public double moveTop(boolean discVac, boolean ballVac) {
         double topAngle = wrist.getAngle();
         if(discVac && !ballVac && controller.getYButton()){
-            arm.armSet(120);
-            wrist.spinTo(131);
-            topAngle = 131;
+            arm.armSet(117);
+            wrist.spinTo(192);
+            topAngle = 192;
         }
         else if(ballVac && !discVac && controller.getYButton()){
-            arm.armSet(120);
-            wrist.spinTo(131);
-            topAngle = 131;
+            arm.armSet(117);
+            wrist.spinTo(146);
+            topAngle = 146;
         }
-        else{
-            arm.armSet(120);
-            wrist.spinTo(131);
-            topAngle = 131;
-        }
+        // else{
+        //     arm.armSet(120);
+        //     wrist.spinTo(131);
+        //     topAngle = 131;
+        // }
         return topAngle;
     }
     public double moveMid(boolean discVac, boolean ballVac) {
         double midAngle = wrist.getAngle();
         if(discVac && !ballVac && controller.getBButton()){
-            arm.armSet(87);
-            wrist.spinTo(160);
-            midAngle = 160;
+            arm.armSet(72);
+            wrist.spinTo(162);
+            midAngle = 162;
         }
         else if(ballVac && !discVac && controller.getBButton()){
-            arm.armSet(85);
-            wrist.spinTo(160);
-            midAngle = 160;
+            arm.armSet(86);
+            wrist.spinTo(172);
+            midAngle = 172;
         }
-        else{
-            arm.armSet(61);
-            wrist.spinTo(20);
-            midAngle = 20;
-        }
+        // else{
+        //     arm.armSet(61);
+        //     wrist.spinTo(20);
+        //     midAngle = 20;
+        // }
         return midAngle;
     }
     public double moveBottom(boolean discVac, boolean ballVac) {
         double bottomAngle = wrist.getAngle();
         if(discVac && !ballVac && controller.getAButton()){
-            arm.armSet(113);
-            wrist.spinTo(43);
-            bottomAngle = 43;
+            arm.armSet(30);
+            wrist.spinTo(118);
+            bottomAngle = 118;
         }
         else if(ballVac && !discVac && controller.getAButton()){
-            arm.armSet(117);
-            wrist.spinTo(43);
-            bottomAngle = 43;
+            arm.armSet(42);
+            wrist.spinTo(127);
+            bottomAngle = 127;
         }
-        else{
-            arm.armSet(32);
-            wrist.spinTo(122);
-            bottomAngle = 122;
-        }
+        // else{
+        //     arm.armSet(32);
+        //     wrist.spinTo(122);
+        //     bottomAngle = 122;
+        // }
         return bottomAngle;
     }
     public double moveStation(boolean discVac, boolean ballVac) {
         double stationAngle = wrist.getAngle();
         if(discVac && !ballVac && controller.getXButton()){
-            arm.armSet(60);
-            wrist.spinTo(104);
-            stationAngle = 104;
+            arm.armSet(30);
+            wrist.spinTo(118);
+            stationAngle = 118;
         }
         else if(ballVac && !discVac && controller.getXButton()){
-            arm.armSet(60);
-            wrist.spinTo(108);
-            stationAngle = 108;
+            arm.armSet(52);
+            wrist.spinTo(101);
+            stationAngle = 101;
         }
-        else{
-            arm.armSet(32);
-            wrist.spinTo(122);
-            stationAngle = 122;
-        }
+        // else{
+        //     arm.armSet(32);
+        //     wrist.spinTo(122);
+        //     stationAngle = 122;
+        // }
         return stationAngle;
     }
     public double moveGround(boolean discVac, boolean ballVac) {
@@ -115,11 +115,11 @@ public class Arm {
             wrist.spinTo(136);
             groundAngle = 136;
         }
-        else{
-            arm.armSet(32);
-            wrist.spinTo(122);
-            groundAngle = 122;
-        }
+        // else{
+        //     arm.armSet(32);
+        //     wrist.spinTo(122);
+        //     groundAngle = 122;
+        // }
         return groundAngle;
     }
     // End Arm/Wrist Presets

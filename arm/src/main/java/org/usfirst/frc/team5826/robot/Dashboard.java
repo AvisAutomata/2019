@@ -53,4 +53,7 @@ public class Dashboard {
     public double getDistance(){
         return SmartDashboard.getNumber("ApproachDistance", 30.0);
     }
+    public double getAngle(){
+        return SmartDashboard.getNumber("angle", 0.0);
+    }
 }

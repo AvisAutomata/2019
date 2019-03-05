@@ -81,8 +81,8 @@ public class Robot extends IterativeRobot {
 		armSS = new Arm(arm, wrist, armOperator);
 		dash = new Dashboard(arm, wrist, gyro, lidarRight, lidarLeft);
 		table = NetworkTableInstance.getDefault().getTable("limelight");
-		NetworkTableEntry ledMode = table.getEntry("ledMode");
-		ledMode.setDouble(1);
+		NetworkTableEntry pipeline = table.getEntry("pipeline");
+		pipeline.setDouble(9);
 		dash.init();
 	}
 
@@ -120,8 +120,8 @@ public class Robot extends IterativeRobot {
 
 		if (driver.getRawButtonReleased(8) || driver.getRawButtonReleased(5)) {
 			table = NetworkTableInstance.getDefault().getTable("limelight");
-			NetworkTableEntry ledMode = table.getEntry("ledMode");
-			ledMode.setDouble(1);
+			NetworkTableEntry pipeline = table.getEntry("pipeline");
+			pipeline.setDouble(9);
 		}
 
 		if (driver.getRawButton(8)) {
@@ -137,12 +137,12 @@ public class Robot extends IterativeRobot {
 			}
 
 		} else if (driver.getRawButton(10)) {
-			approachGyroBased(gyroValue);
+			approachGyroBased(gyroValue, dash.getAngle());
 		} else if (driver.getRawButton(12)) {
 			cardBoxApproach();
 		} else if (drive) {
 			myRobot.arcadeDrive(driver.getY() * ((driver.getRawAxis(3) - 1) / 2),
-					driver.getZ() * -((driver.getRawAxis(3) - 1) / 2));
+					driver.getZ()* 0.75 * -((driver.getRawAxis(3) - 1) / 2));
 			// if (driver.getRawButton(3)) {
 			// hwheel.set(0.5);
 			// } else if (driver.getRawButton(4)) {
@@ -167,11 +167,11 @@ public class Robot extends IterativeRobot {
 			wristAngle = 0;
 		}
 		System.out.println("arm = " + arm.getAngle() + " wrist = " + wrist.getAngle() + " Gyro = " + gyroValue);
-		if (armOperator.getAButton()) {
+		if (armOperator.getXButton()) {
 			wristAngle = armSS.moveStation(discVac, ballVac);
-		} else if (armOperator.getBButton()) {
+		} else if (armOperator.getAButton()) {
 			wristAngle = armSS.moveBottom(discVac, ballVac);
-		} else if (armOperator.getYButton()) {
+		} else if (armOperator.getBButton()) {
 			wristAngle = armSS.moveMid(discVac, ballVac);
 		} else if (armOperator.getYButton()) {
 			wristAngle = armSS.moveTop(discVac, ballVac);
@@ -251,20 +251,20 @@ public class Robot extends IterativeRobot {
 
 	private void followTarget() {
 		table = NetworkTableInstance.getDefault().getTable("limelight");
-		NetworkTableEntry ledMode = table.getEntry("ledMode");
+		NetworkTableEntry pipeline = table.getEntry("pipeline");
+		pipeline.setDouble(8);
 		NetworkTableEntry tx = table.getEntry("tx");
 		NetworkTableEntry ta = table.getEntry("ta");
 		NetworkTableEntry tv = table.getEntry("tv");
-		ledMode.setDouble(0);
 
 		double target = tv.getDouble(0.0);
 		double x = tx.getDouble(0.0);
 		double area = ta.getDouble(0.0);
 
 		if (area < 1 && target == 1) {
-			myRobot.arcadeDrive(0.4, x / Math.abs(x) * Math.min(Math.abs(x / 10), 0.5));
+			myRobot.arcadeDrive(0.55, x / Math.abs(x) * Math.min(Math.abs(x / 10), 0.5));
 		} else if (area > 1.5 && target == 1) {
-			myRobot.arcadeDrive(-0.4, x / Math.abs(x) * (Math.min(Math.abs(x / 10), 0.5)));
+			myRobot.arcadeDrive(-0.55, x / Math.abs(x) * (Math.min(Math.abs(x / 10), 0.5)));
 		} else {
 			myRobot.arcadeDrive(0, 0);
 		}
@@ -308,14 +308,11 @@ public class Robot extends IterativeRobot {
 	}
 
 	// NEW APPROACH CODE
-	public void approachGyroBased(double gyroValue) {
+	public void approachGyroBased(double gyroValue, double angle) {
 		table = NetworkTableInstance.getDefault().getTable("limelight");
-		NetworkTableEntry ledMode = table.getEntry("ledMode");
 		NetworkTableEntry tx = table.getEntry("tx");
 		NetworkTableEntry tv = table.getEntry("tv");
 		NetworkTableEntry pipeline = table.getEntry("pipeline");
-		ledMode.setDouble(0);
-
 		pipeline.setDouble(0);
 		double target = tv.getDouble(0.0);
 		double x = tx.getDouble(0.0);
@@ -323,9 +320,10 @@ public class Robot extends IterativeRobot {
 		// TODO Find Angles, Base angle on where we are.
 		if (target == 1) {
 			hwheel.set(-x / Math.abs((x != 0) ? x : 1) * Math.min(Math.abs(x / 2), 0.33));
-			if (Math.abs(gyroValue - 180) > 2) {
+			if (Math.abs(gyroValue - angle) > 2) {
 				myRobot.arcadeDrive(-driver.getY(),
-						gyroValue / Math.abs((gyroValue != 0) ? gyroValue : 1) * Math.min((gyroValue - 180) / 4, 0.5));
+						-(gyroValue-angle) / Math.abs(((gyroValue - angle) != 0) ? (gyroValue - angle) : 1)
+								* Math.min(Math.abs(gyroValue - angle) / 8, 0.5));
 			} else {
 				myRobot.arcadeDrive(-driver.getY(), 0);
 			}
