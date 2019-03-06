@@ -6,6 +6,13 @@
   "configurations": [
     {
       "type": "java",
+      "name": "CodeLens (Launch) - Robot",
+      "request": "launch",
+      "mainClass": "org.usfirst.frc.team5826.robot.Robot",
+      "projectName": "arm"
+    },
+    {
+      "type": "java",
       "name": "CodeLens (Launch) - Main",
       "request": "launch",
       "mainClass": "org.usfirst.frc.team5826.robot.Main",
