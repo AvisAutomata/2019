@@ -55,6 +55,7 @@ public class Robot extends IterativeRobot {
 	private Actuator arm;
 	private Arm armSS;
 	private Dashboard dash;
+	private Approach approach;
 	NetworkTable table;
 	private Gyro gyro = new ADXRS450_Gyro();
 	LidarLitePWM lidarLeft = new LidarLitePWM(new DigitalInput(8));
@@ -67,7 +68,7 @@ public class Robot extends IterativeRobot {
 	boolean drive = true;
 	boolean discVac = false;
 	boolean ballVac = false;
-	double rot;
+	boolean cameraState = true;
 
 	/**
 	 * This function is run when the robot is first started up and should be used
@@ -81,6 +82,7 @@ public class Robot extends IterativeRobot {
 		arm = new Actuator(armController, armEncoder, 100, 20, 0);
 		armSS = new Arm(arm, wrist, armOperator);
 		dash = new Dashboard(arm, wrist, lidarRight, lidarLeft);
+		approach = new Approach(table, arm, hwheel, driver, myRobot);
 		table = NetworkTableInstance.getDefault().getTable("limelight");
 		NetworkTableEntry pipeline = table.getEntry("pipeline");
 		pipeline.setDouble(9);
@@ -89,6 +91,7 @@ public class Robot extends IterativeRobot {
 
 	@Override
 	public void autonomousInit() {
+		gyro.reset();
 		teleopInit();
 	}
 
@@ -118,25 +121,42 @@ public class Robot extends IterativeRobot {
 		if (armOperator.getStartButton()) {
 			gyro.reset();
 		}
+		if(driver.getRawButton(2)){
+			gyro.calibrate();
+		}
 
-		if (driver.getRawButtonReleased(8) || driver.getRawButtonReleased(5) || driver.getRawButtonReleased(10)) {
+		if (cameraState) {
 			table = NetworkTableInstance.getDefault().getTable("limelight");
 			NetworkTableEntry pipeline = table.getEntry("pipeline");
 			pipeline.setDouble(9);
 		}
 
-		if (driver.getRawButton(8)) {
-			approach();
+		if (driver.getRawButton(11)) {
+			approach.rocket(gyroValue, ballVac, discVac);
+			cameraState = false;
+		} else if (driver.getRawButton(12)) {
+			approach.cargoStation(gyroValue);
+			cameraState = false;
+		} else if (driver.getRawButton(11)) {
+			// approach.station(gyroValue);
+			cameraState = false;
 		} else if (driver.getRawButton(10)) {
-			if (Math.abs(gyroValue - 330) < 40 && discVac) {
-				approachGyroBased(gyroValue, 330);
-			} else if (Math.abs(gyroValue - 180) < 15) {
+			if (Math.abs(gyroValue - 180) < 15) {
 				approachGyroBased(gyroValue, 180);
-			} else if (Math.abs(gyroValue - 270) < 40 && ballVac) {
+			} else if (Math.abs(gyroValue - 330) < 30 && discVac) {
+				approachGyroBased(gyroValue, 330);
+			} else if (Math.abs(gyroValue - 270) < 15 && ballVac) {
 				approachGyroBased(gyroValue, 270);
 			} else if (Math.abs(gyroValue - 210) < 15 && discVac) {
 				approachGyroBased(gyroValue, 210);
+			} else if (Math.abs(gyroValue - 30) < 30 && discVac) {
+				approachGyroBased(gyroValue, 30);
+			} else if (Math.abs(gyroValue - 90) < 15 && ballVac) {
+				approachGyroBased(gyroValue, 90);
+			} else if (Math.abs(gyroValue - 150) < 15 && discVac) {
+				approachGyroBased(gyroValue, 150);
 			}
+			cameraState = false;
 		} else if (drive) {
 			myRobot.arcadeDrive(driver.getY() * ((driver.getRawAxis(3) - 1) / 2),
 					driver.getZ() * 0.75 * -((driver.getRawAxis(3) - 1) / 2));
@@ -153,8 +173,10 @@ public class Robot extends IterativeRobot {
 			} else {
 				hwheel.set(0);
 			}
+			cameraState = true;
 		} else {
 			followTarget();
+			cameraState = false;
 		}
 
 		// Start Arm/Wrist
@@ -189,7 +211,7 @@ public class Robot extends IterativeRobot {
 		// End Arm/Wrist
 
 		// Start Disk Vacuum
-		if (armOperator.getBumper(Hand.kRight)) {
+		if (armOperator.getBumper(Hand.kRight) && !ballVac) {
 			discVac = true;
 		} else if (armOperator.getTriggerAxis(Hand.kLeft) > 0.5 || armOperator.getTriggerAxis(Hand.kRight) > 0.5) {
 			discVac = false;
@@ -203,7 +225,7 @@ public class Robot extends IterativeRobot {
 		// End Disk Vacuum
 
 		// Start Ball Vacuum
-		if (armOperator.getBumper(Hand.kLeft)) {
+		if (armOperator.getBumper(Hand.kLeft) && !discVac) {
 			ballVac = true;
 		} else if (armOperator.getTriggerAxis(Hand.kLeft) > 0.5 || armOperator.getTriggerAxis(Hand.kRight) > 0.5) {
 			ballVac = false;
@@ -215,14 +237,7 @@ public class Robot extends IterativeRobot {
 			vacuumController2.set(ControlMode.PercentOutput, 0);
 		}
 		// End Ball Vacuum
-		// PDP CODE
-		// if (pdp.getCurrent(4) > 8 || (pdp.getCurrent(12) < 10 && pdp.getCurrent(12) >
-		// 4)) {
-		// armOperator.setRumble(RumbleType.kRightRumble, 0.2);
-		// } else {
-		// armOperator.setRumble(RumbleType.kRightRumble, 0);
-		// }
-		// End Vacuums
+		
 		// Start Solenoids
 		int pov = driver.getPOV();
 		if (pov >= 270 || (pov <= 90 && pov != -1)) {
@@ -266,42 +281,42 @@ public class Robot extends IterativeRobot {
 		}
 	}
 
-	public void approach() {
-		// System.out.println(lidarRight.getDistance());
-		// space = dist between robot and board
-		double space = 80;
-		// Limelight mount offset
-		double offset = 5;
+	// public void approach() {
+	// 	// System.out.println(lidarRight.getDistance());
+	// 	// space = dist between robot and board
+	// 	double space = 80;
+	// 	// Limelight mount offset
+	// 	double offset = 5;
 
-		table = NetworkTableInstance.getDefault().getTable("limelight");
-		NetworkTableEntry ledMode = table.getEntry("ledMode");
-		ledMode.setDouble(0);
-		NetworkTableEntry pipeline = table.getEntry("pipeline");
-		pipeline.setDouble(0);
-		NetworkTableEntry tx = table.getEntry("tx");
-		NetworkTableEntry tv = table.getEntry("tv");
-		double x = tx.getDouble(0.0) - offset;
-		double target = tv.getDouble(0.0);
-		double leftDist = lidarLeft.getDistance();
-		double rightDist = lidarRight.getDistance();
-		double mindist = Math.min(leftDist, rightDist);
-		double maxdist = Math.max(leftDist, rightDist);
-		double curve = (leftDist - rightDist) / (maxdist * 1.25);
+	// 	table = NetworkTableInstance.getDefault().getTable("limelight");
+	// 	NetworkTableEntry ledMode = table.getEntry("ledMode");
+	// 	ledMode.setDouble(0);
+	// 	NetworkTableEntry pipeline = table.getEntry("pipeline");
+	// 	pipeline.setDouble(0);
+	// 	NetworkTableEntry tx = table.getEntry("tx");
+	// 	NetworkTableEntry tv = table.getEntry("tv");
+	// 	double x = tx.getDouble(0.0) - offset;
+	// 	double target = tv.getDouble(0.0);
+	// 	double leftDist = lidarLeft.getDistance();
+	// 	double rightDist = lidarRight.getDistance();
+	// 	double mindist = Math.min(leftDist, rightDist);
+	// 	double maxdist = Math.max(leftDist, rightDist);
+	// 	double curve = (leftDist - rightDist) / (maxdist * 1.25);
 
-		if (target == 1) {
-			hwheel.set(-x / Math.abs((x != 0) ? x : 1) * Math.min(Math.abs(x / 2), 0.33));
-			if (mindist > 2 * space) {
-				myRobot.arcadeDrive(.7, curve);
-			} else if (mindist >= space) {
-				myRobot.arcadeDrive(.25, curve);
-			} else if (mindist < 2 + space && mindist > space - 2) {
-				myRobot.arcadeDrive(0, curve);
-			} else if (mindist < space - 2 && mindist > 0) {
-				myRobot.arcadeDrive(-.25, curve);
-			}
+	// 	if (target == 1) {
+	// 		hwheel.set(-x / Math.abs((x != 0) ? x : 1) * Math.min(Math.abs(x / 2), 0.33));
+	// 		if (mindist > 2 * space) {
+	// 			myRobot.arcadeDrive(.7, curve);
+	// 		} else if (mindist >= space) {
+	// 			myRobot.arcadeDrive(.25, curve);
+	// 		} else if (mindist < 2 + space && mindist > space - 2) {
+	// 			myRobot.arcadeDrive(0, curve);
+	// 		} else if (mindist < space - 2 && mindist > 0) {
+	// 			myRobot.arcadeDrive(-.25, curve);
+	// 		}
 
-		}
-	}
+	// 	}
+	// }
 
 	// NEW APPROACH CODE
 	public void approachGyroBased(double gyroValue, double angle) {
